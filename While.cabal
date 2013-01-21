@@ -1,0 +1,21 @@
+name: While
+version: 1.0
+cabal-version: >=1.10
+build-type: Custom
+license: BSD3
+license-file: LICENSE
+homepage: http://hunit.sourceforge.net/
+synopsis: Otro
+category: Experimental
+data-dir: ""
+
+executable wh
+    build-depends: base -any, uulib -any
+    main-is: Main.hs
+    buildable: True
+    default-language: Haskell98
+    hs-source-dirs: src
+    other-modules: State Expr SemExpr
+    x-agmodule: file : "src/SemExpr.ag" options: data, catas, semfuns, signatures, pretty, wrappers, module "SemExpr"
+    x-agmodule: file : "src/Expr.ag"    options: data, catas, semfuns, signatures, pretty, rename,  module "Expr"
+

@@ -1,0 +1,111 @@
+imports
+{
+import State
+import Data.Maybe
+import UU.Util.Utils
+}
+
+INCLUDE "Expr.ag"
+
+ATTR Arit [gamma : ValGam || val : { Maybe (Int, String)} id : String]
+
+ATTR Boole  [gamma : ValGam || val : {Bool}] --no necesito el gamma(creo)
+
+ATTR Expr [gamma : ValGam || fo : FIOut ]
+
+ATTR RootAbs [ || fo : FIOut ]
+
+SEM Arit
+        | Num   lhs.val                            = Just (read @n :: Int,[])
+                lhs.id                             = []
+        | Var   lhs.val                            = valGamLookupVar1 @s @lhs.gamma
+                lhs.id                             = @s
+        | Sum   (lhs.val, lhs.id)                  = case (@a1.val , @a2.val) of
+                                                          (Nothing , Nothing )             -> (Nothing ,@a1.id ++ " " ++ @a2.id)
+                                                          (Nothing , _ )                   -> (Nothing ,@a1.id)
+                                                          ( _ ,Nothing )                   -> (Nothing ,@a2.id)
+                                                          ( Just (n1,s1) , Just (n2,s2) )  -> (Just ((n1+n2),s1 ++ s2), [])
+
+        | Mul   (lhs.val, lhs.id)                  = case (@a1.val , @a2.val) of
+                                                          (Nothing , Nothing )             -> (Nothing ,@a1.id ++ " " ++ @a2.id)
+                                                          (Nothing , _ )                   -> (Nothing ,@a1.id)
+                                                          ( _ ,Nothing )                   -> (Nothing ,@a2.id)
+                                                          ( Just (n1,s1) , Just (n2,s2) )  -> (Just ((n1*n2),s1 ++ s2), [])
+
+        | Res   (lhs.val, lhs.id)                  = case (@a1.val , @a2.val) of
+                                                          (Nothing , Nothing )             -> (Nothing ,@a1.id ++ " " ++ @a2.id)
+                                                          (Nothing , _ )                   -> (Nothing ,@a1.id)
+                                                          ( _ ,Nothing )                   -> (Nothing ,@a2.id)
+                                                          ( Just (n1,s1) , Just (n2,s2) )  -> (Just ((n1-n2),s1 ++ s2), [])
+
+SEM Boole
+        | Bol   lhs.val                            = read @b :: Bool
+
+        | Equ   lhs.val                            = case (@a1.val , @a2.val) of --arreglar
+                                                          (Nothing , Nothing )             -> False
+                                                          (Nothing , _ )                   -> False
+                                                          ( _ ,Nothing )                   -> False
+                                                          ( Just (n1,s1) , Just (n2,s2) )  -> n1==n2
+        | Geq   lhs.val                            = case (@a1.val , @a2.val) of --arreglar
+                                                          (Nothing , Nothing )             -> False
+                                                          (Nothing , _ )                   -> False
+                                                          ( _ ,Nothing )                   -> False
+                                                          ( Just (n1,s1) , Just (n2,s2) )  -> n1<=n2
+
+
+SEM Expr
+        | Skp
+                lhs.fo                             = FIOut{
+                                                           fov         = @lhs.gamma
+                                                           , foErrL    = []
+                                                          }
+        | Asig
+                (loc.an, loc.err)                  = case @a.val of
+                                                          Nothing      -> (0, "Error: variable '"++ @a.id ++"' no inicializada ,")
+                                                          Just (d , s) -> (d, [])
+                loc.gam                            = case @v.val of
+                                                          Nothing      -> addVar @v.id @an @lhs.gamma
+                                                          Just (d , s) -> chngVar @v.id @an @lhs.gamma
+                lhs.fo                             = FIOut{
+                                                           fov         = @gam
+                                                           , foErrL    = @err
+                                                          }
+        | Secu
+                loc.gams                           = fov     @s1.fo
+                loc.er1                            = foErrL  @s1.fo
+                s2.gamma                           = @gams
+                loc.gam                            = fov     @s2.fo
+                loc.er2                            = foErrL  @s2.fo
+                lhs.fo                             = FIOut{
+                                                          fov          = @gam
+                                                          , foErrL     = @er1 ++ @er2
+                                                     }
+
+        | If    loc.bb                             = @b.val
+                (loc.gam, loc.err)                 = case @bb of
+                                                        True        -> (fov @s1.fo , foErrL @s1.fo)
+                                                        False       -> (fov @s2.fo , foErrL @s2.fo)
+                lhs.fo                             = FIOut{
+                                                           fov         = @gam
+                                                           , foErrL    = @err
+                                                          }
+        | Wh    loc.g                              = whilef @b @s1 @lhs.gamma
+                lhs.fo                             = FIOut{
+                                                           fov         = @g
+                                                           , foErrL    = []
+                                                          }
+{
+
+whilef :: T_Boole -> T_Expr -> Gam String Int -> Gam String Int --s1 b gamma
+whilef b s gam =
+                let
+                    fo = s gam
+                    gt  = fov fo
+                    bt = b gam
+                in case bt of
+                    False -> gam
+                    True  -> whilef b s gt
+
+
+}
+SEM RootAbs | RootAbs exp.gamma     = emptyGamma

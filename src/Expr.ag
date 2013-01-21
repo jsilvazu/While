@@ -1,0 +1,37 @@
+imports
+{
+}
+
+DATA Arit
+    | Var   s : {String}
+    | Num   n : {String}
+    | Sum   a1: Arit
+            a2: Arit
+    | Mul   a1: Arit
+            a2: Arit
+    | Res   a1: Arit
+            a2: Arit
+DATA Boole
+    | Bol   b : {String}
+    | Equ   a1: Arit
+            a2: Arit
+    | Geq   a1: Arit
+            a2: Arit
+
+DATA Expr
+    | Skp     b : {String}
+    | Asig    v :  Arit
+              a :  Arit
+    | Secu    s1:  Expr
+              s2:  Expr
+    | If      b :  Boole
+              s1:  Expr
+              s2:  Expr
+    | Wh      b :  Boole
+              s1:  Expr
+
+---------------------------------------
+
+DATA RootAbs | RootAbs exp : Expr
+
+DERIVING Expr Arit Boole: Show
