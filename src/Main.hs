@@ -8,43 +8,35 @@ import SemExpr
 
 import System.Environment(getArgs)
 
-pExpr  = pAsig
-        <|> pSecu
-        <|> pIf
-        <|> Skp <$> pKey "skip"
-        <|> pWh
-         <|> pKey "(" *> pExpr <* pKey ")"
+pExpr  = pChainl (Secu <$ pKey ";") (
+                                        pAsig
+                                        <|> pIf
+                                        <|> Skp <$> pKey "skip"
+                                        <|> pWh
+                                        <|> pKey "(" *> pExpr <* pKey ")"
+                                    )
 
 
 pAsig  = Asig <$> pVar <* pKey ":=" <*> pArit
-pSecu  = Secu <$  pKey ";" <*> pExpr <*> pExpr
 pIf    = If   <$  pKey "if" <*> pBool <*  pKey "then" <*> pExpr <*  pKey "else" <*> pExpr
 pWh    = Wh   <$  pKey "while" <*> pBool <* pKey "do" <*> pExpr
 
 pRoot  = RootAbs <$> pExpr
 
-pArit   = pInt
-          <|> pVar
-          <|> Sum <$ pKey "+" <*> pArit  <*> pArit
-          <|> Mul <$ pKey "*" <*> pArit  <*> pArit
-          <|> Res <$ pKey "-" <*> pArit  <*> pArit
+pArit  = pChainl (Sum <$ pKey "+" <|> Res <$ pKey "-") (pChainr (Mul <$ pKey "*") (pVar <|> pInt <|> (pKey "(" *> pArit <* pKey ")")))
+         -- <|> pKey "(" *> pArit <* pKey ")"
 
 pInt   = Num <$> pInteger
 pVar   = Var <$> pVarid
 
-pBool  = Bol <$> (pKey "True" <|> pKey "False")
-            <|> pEqu
-            <|> pGeq
+pBool  = pChainl (And <$ pKey "^") (
+            Bol  <$> (pKey "True" <|> pKey "False")
+                 <|> pABol
+                 <|> Not <$ pKey "not" <*> pBool
+             )
 
-pEqu   = Equ <$ pKey "==" <*> pArit <*> pArit
-pGeq   = Geq <$ pKey "<=" <*> pArit <*> pArit
---
---
---pLambda = Abs . HNm <$ pKey "\\" <*> pVarid <* pKey "->" <*> pExpr
--- :t Expr
---pLet   = Let . HNm <$ pKey "let" <*> pVarid
---        <* pKey "=" <*> pExpr
---        <* pKey "in" <*> pExpr
+pABol   = pArit <**> (Equ <$ pKey "==" <|> Geq <$ pKey "<=") <*> pArit
+
 
 -------------------------------------------------------------
 
@@ -91,15 +83,15 @@ main = do
             s = --"; x:= 6 if <= x 6 then x := + x 1 else y := x"
                 --"; ; x := 0 y:=0 while <= x 6 do ; x := + x 1 y := + x y"
                 --"; ; y := 1 x:=2 y := 3"
-                ";  "
-          t pRoot (lmbdScanTxt s )
-          a <- parseIO pExpr (lmbdScanTxt s)
+                "not True"
+          -- t pRoot (lmbdScanTxt s )
+          a <- parseIO pBool (lmbdScanTxt s)
           print a
 
 kywrdtxt = ["True","False", "if", "then", "else", "skip", "while", "do"]
-kywrdops = [ "==", "<=",  "=", "+", ":=", "-", ";", "*"]
+kywrdops = [ "==", "<=",  "=", "+", ":=", "-", ";", "*","not", "^"]
 spcchrs  = "()[]{}|"
-opchrs   = "-:=>+,;*<="
+opchrs   = "-:=>+,;*<=not^"
 lmbdScan = scan kywrdtxt kywrdops spcchrs opchrs
 
 

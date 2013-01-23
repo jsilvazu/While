@@ -41,17 +41,22 @@ SEM Arit
 SEM Boole
         | Bol   lhs.val                            = read @b :: Bool
 
+
         | Equ   lhs.val                            = case (@a1.val , @a2.val) of --arreglar
                                                           (Nothing , Nothing )             -> False
                                                           (Nothing , _ )                   -> False
                                                           ( _ ,Nothing )                   -> False
                                                           ( Just (n1,s1) , Just (n2,s2) )  -> n1==n2
+
         | Geq   lhs.val                            = case (@a1.val , @a2.val) of --arreglar
                                                           (Nothing , Nothing )             -> False
                                                           (Nothing , _ )                   -> False
                                                           ( _ ,Nothing )                   -> False
                                                           ( Just (n1,s1) , Just (n2,s2) )  -> n1<=n2
 
+        | Not   lhs.val                            = not @b.val
+
+        | And   lhs.val                            = @b1.val && @b2.val
 
 SEM Expr
         | Skp

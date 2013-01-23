@@ -17,6 +17,9 @@ DATA Boole
             a2: Arit
     | Geq   a1: Arit
             a2: Arit
+    | Not   b : Boole
+    | And   b1: Boole
+            b2: Boole
 
 DATA Expr
     | Skp     b : {String}
