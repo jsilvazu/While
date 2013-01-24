@@ -29,10 +29,12 @@ pArit  = pChainl (Sum <$ pKey "+" <|> Res <$ pKey "-") (pChainr (Mul <$ pKey "*"
 pInt   = Num <$> pInteger
 pVar   = Var <$> pVarid
 
-pBool  = pChainl (And <$ pKey "^") (
+pBool  =
+    pChainl (And <$ pKey "^") (
             Bol  <$> (pKey "True" <|> pKey "False")
                  <|> pABol
-                 <|> Not <$ pKey "not" <*> pBool
+                 <|> Not <$ pKey "~" <*> pBool
+                 <|> (pKey "(" *> pBool <* pKey ")")
              )
 
 pABol   = pArit <**> (Equ <$ pKey "==" <|> Geq <$ pKey "<=") <*> pArit
@@ -83,15 +85,15 @@ main = do
             s = --"; x:= 6 if <= x 6 then x := + x 1 else y := x"
                 --"; ; x := 0 y:=0 while <= x 6 do ; x := + x 1 y := + x y"
                 --"; ; y := 1 x:=2 y := 3"
-                "not True"
+                "skip"
           -- t pRoot (lmbdScanTxt s )
-          a <- parseIO pBool (lmbdScanTxt s)
+          a <- parseIO pExpr (lmbdScanTxt s)
           print a
 
 kywrdtxt = ["True","False", "if", "then", "else", "skip", "while", "do"]
-kywrdops = [ "==", "<=",  "=", "+", ":=", "-", ";", "*","not", "^"]
+kywrdops = [ "==", "<=",  "=", "+", ":=", "-", ";", "*","~", "^"]
 spcchrs  = "()[]{}|"
-opchrs   = "-:=>+,;*<=not^"
+opchrs   = "-:=>+,;*<=~^"
 lmbdScan = scan kywrdtxt kywrdops spcchrs opchrs
 
 
