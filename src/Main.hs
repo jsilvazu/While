@@ -71,22 +71,22 @@ use :: String
 use = "Use: wh <path>"
 
 
-mail = do
+main = do
         args <- getArgs
         if length args /= 1
          then
             print use
          else
-            print use--process (head args)
+            process (head args)
 
 -- IO <$
-main = do
+mail = do
           let
             s = --"; x:= 6 if <= x 6 then x := + x 1 else y := x"
                 --"; ; x := 0 y:=0 while <= x 6 do ; x := + x 1 y := + x y"
                 --"; ; y := 1 x:=2 y := 3"
                 "skip"
-          -- t pRoot (lmbdScanTxt s )
+          t pRoot (lmbdScanTxt s )
           a <- parseIO pExpr (lmbdScanTxt s)
           print a
 
